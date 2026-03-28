@@ -18,7 +18,6 @@ An interactive machine learning project that trains, evaluates, and visualises t
     └── fnn-cnn.ipynb   # Fusion model training, evaluation & metrics
 ```
 
-
 ## Dataset
 
 **Fashion MNIST** — a drop-in replacement for MNIST using grayscale clothing images.
@@ -32,7 +31,6 @@ An interactive machine learning project that trains, evaluates, and visualises t
 
 **Classes:** T-shirt/Top, Trouser, Pullover, Dress, Coat, Sandal, Shirt, Sneaker, Bag, Ankle Boot
 
-
 ## Models
 
 ### 1. FNN — Feedforward Neural Network (`notebooks/FNN.ipynb`)
@@ -40,6 +38,7 @@ An interactive machine learning project that trains, evaluates, and visualises t
 A standard multi-layer perceptron. The raw 28×28 image is flattened to a 784-dimensional vector and passed through fully-connected layers.
 
 **Architecture**
+
 ```
 Input (784)
   → Linear(784 → 256) → ReLU → Dropout(0.5)
@@ -62,12 +61,12 @@ Input (784)
 **Strengths:** simple, fast to train, learns global relationships across all pixels.
 **Limitations:** flattening destroys spatial structure; no understanding of pixel position or local patterns.
 
-
 ### 2. CNN — Convolutional Neural Network (`notebooks/CNN.ipynb`)
 
 A deep convolutional network with three double-conv blocks, batch normalisation, max-pooling, and dropout.
 
 **Architecture**
+
 ```
 Input (1 × 28 × 28)
   → Conv(1→32) → BN → ReLU → Conv(32→32) → BN → ReLU → MaxPool → Dropout(0.20)   # 28→14
@@ -93,13 +92,12 @@ Input (1 × 28 × 28)
 **Strengths:** detects spatial features (edges, shapes, textures); parameter-efficient via kernel sharing.
 **Limitations:** can miss global relationships; more complex to tune; higher compute cost.
 
-
-
 ### 3. FNN + CNN Fusion (`notebooks/fnn-cnn.ipynb`)
 
 A dual-branch model that processes each image through both a residual CNN branch and an FNN branch in parallel, concatenates their feature vectors, and passes the combined representation through a joint classifier.
 
 **Architecture**
+
 ```
 Input (1 × 28 × 28)
      │
@@ -136,8 +134,6 @@ Input (1 × 28 × 28)
 
 **Why fusion?** The CNN branch captures local spatial patterns — edges, textures, shapes — that the FNN misses because flattening destroys pixel locality. The FNN branch captures global pixel relationships that a purely local convolution can overlook. Concatenating both 512-D and 128-D representations gives the classifier a 640-dimensional feature space that is richer than either model alone.
 
-
-
 ## Results
 
 | Model | Test Accuracy |
@@ -148,7 +144,9 @@ Input (1 × 28 × 28)
 
 All models are evaluated on the standard 10,000-sample Fashion MNIST test set. Metrics reported per model: accuracy, macro precision, macro recall, macro F1-score, and per-class confusion matrix.
 
+### Model Inference on Raspberry Pi 5
 
+![Inference Result](/fusion-model/assets/inference_res.png)
 
 ## Interactive Simulations
 
@@ -178,8 +176,6 @@ The HTML pages provide a browser-based, step-by-step animated visualisation of t
 - Gating visualisation shows FNN and CNN feature contribution weights
 - Comparison strip at the top shows all three model confidences side by side after each stream completes
 
-
-
 ## Getting Started
 
 ### Running the notebooks
@@ -206,8 +202,6 @@ python -m http.server 8000
 # visit http://localhost:8000
 ```
 
-
-
 ## Dependencies
 
 **Notebooks**
@@ -222,8 +216,6 @@ python -m http.server 8000
 | `numpy` | Array operations |
 
 **HTML simulations** — no dependencies. All logic is vanilla JavaScript. Fonts (Space Mono, Outfit) loaded from Google Fonts.
-
-
 
 ## Authors
 
