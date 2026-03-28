@@ -734,21 +734,21 @@ function renderOutputRows(probs,logits){
 
 // -- Simulation steps --
 const SIM_STEPS=[
-  {label:'FNN input', action:(fw)=>{ activateFnnNeurons(0,null,784,FNN_COLOR); $('fnn-stream').classList.add('active-card','glow-fnn'); highlightPb(0,'fnn'); }},
-  {label:'FNN dense 1', action:(fw)=>{ activateFnnNeurons(1,fw.fnnLayers[1],512,FNN_COLOR); $('fnn-badge').textContent=fw.fnnLayers[1].filter(v=>v>0.05).length+'/512 active'; highlightPb(1,'fnn'); }},
-  {label:'FNN dense 2', action:(fw)=>{ activateFnnNeurons(2,fw.fnnLayers[2],256,FNN_COLOR); $('fnn-badge').textContent=fw.fnnLayers[2].filter(v=>v>0.05).length+'/256 active'; highlightPb(2,'fnn'); }},
-  {label:'FNN dense 3', action:(fw)=>{ activateFnnNeurons(3,fw.fnnLayers[3],128,FNN_COLOR); $('fnn-badge').textContent=fw.fnnLayers[3].filter(v=>v>0.05).length+'/128 active · ready'; highlightPb(3,'fnn'); }},
-  {label:'CNN conv 1', action:(fw)=>{ $('cnn-stream').classList.add('active-card','glow-cnn'); renderFeatureMaps(fw); $('cnn-badge').textContent='conv1 done'; highlightPb(4,'cnn'); }},
-  {label:'CNN conv 2', action:(fw)=>{ renderFvec(fw); $('cnn-badge').textContent='conv2 done'; highlightPb(5,'cnn'); }},
-  {label:'CNN FC', action:(fw)=>{ $('cnn-badge').textContent=fw.cnnFc.filter(v=>v>0.05).length+'/128 active · ready'; highlightPb(6,'cnn'); }},
-  {label:'Fusion', action:(fw)=>{ $('fusion-stream').classList.add('active-card','glow-fusion'); $('fnn-gate-bar').style.width='100%'; $('cnn-gate-bar').style.width='100%'; $('gate-out-val').textContent='256-dim ✓'; $('fusion-badge').textContent='FNN(128) ++ CNN(128) → 256'; highlightPb(7,'fusion'); }},
-  {label:'Output', action:(fw)=>{ $('out-stream').classList.add('active-card','glow-fusion'); renderOutputRows(fw.fusionProbs,fw.fusionLogits); lastFusionProbs=fw.fusionProbs; const w=Math.max(...fw.fusionProbs), wi=fw.fusionProbs.indexOf(w); $('gaugeFill').style.width=Math.round(w*100)+'%'; $('gaugeVal').textContent=Math.round(w*100)+'%'; $('winnerName').textContent=LABELS[wi]; $('winnerBadge').style.display='inline-flex'; highlightPb(8,'fusion'); setNNActiveStep(8); }},
+  {label:'FNN input', action:(fw)=>{ activateFnnNeurons(0,null,784,FNN_COLOR); $('fnn-stream').classList.add('active-card','glow-fnn'); highlightPb(0,'fnn',fw); }},
+  {label:'FNN dense 1', action:(fw)=>{ activateFnnNeurons(1,fw.fnnLayers[1],512,FNN_COLOR); $('fnn-badge').textContent=fw.fnnLayers[1].filter(v=>v>0.05).length+'/512 active'; highlightPb(1,'fnn',fw); }},
+  {label:'FNN dense 2', action:(fw)=>{ activateFnnNeurons(2,fw.fnnLayers[2],256,FNN_COLOR); $('fnn-badge').textContent=fw.fnnLayers[2].filter(v=>v>0.05).length+'/256 active'; highlightPb(2,'fnn',fw); }},
+  {label:'FNN dense 3', action:(fw)=>{ activateFnnNeurons(3,fw.fnnLayers[3],128,FNN_COLOR); $('fnn-badge').textContent=fw.fnnLayers[3].filter(v=>v>0.05).length+'/128 active · ready'; highlightPb(3,'fnn',fw); }},
+  {label:'CNN conv 1', action:(fw)=>{ $('cnn-stream').classList.add('active-card','glow-cnn'); renderFeatureMaps(fw); $('cnn-badge').textContent='conv1 done'; highlightPb(4,'cnn',fw); }},
+  {label:'CNN conv 2', action:(fw)=>{ renderFvec(fw); $('cnn-badge').textContent='conv2 done'; highlightPb(5,'cnn',fw); }},
+  {label:'CNN FC', action:(fw)=>{ $('cnn-badge').textContent=fw.cnnFc.filter(v=>v>0.05).length+'/128 active · ready'; highlightPb(6,'cnn',fw); }},
+  {label:'Fusion', action:(fw)=>{ $('fusion-stream').classList.add('active-card','glow-fusion'); $('fnn-gate-bar').style.width='100%'; $('cnn-gate-bar').style.width='100%'; $('gate-out-val').textContent='256-dim ✓'; $('fusion-badge').textContent='FNN(128) ++ CNN(128) → 256'; highlightPb(7,'fusion',fw); }},
+  {label:'Output', action:(fw)=>{ $('out-stream').classList.add('active-card','glow-fusion'); renderOutputRows(fw.fusionProbs,fw.fusionLogits); lastFusionProbs=fw.fusionProbs; const w=Math.max(...fw.fusionProbs), wi=fw.fusionProbs.indexOf(w); $('gaugeFill').style.width=Math.round(w*100)+'%'; $('gaugeVal').textContent=Math.round(w*100)+'%'; $('winnerName').textContent=LABELS[wi]; $('winnerBadge').style.display='inline-flex'; highlightPb(8,'fusion',fw); }},
 ];
 
 let nnActiveStep=-1;
-function highlightPb(idx, type){
+function highlightPb(idx,type,fw){
   for(let i=0;i<=idx;i++){const el=$('pb'+i);if(el){el.classList.remove('done','cur');el.classList.add(i<idx?'done':'cur');}}
-  setNNActiveStep(idx);
+  setNNActiveStep(idx,fw);
 }
 
 function runSim(){
@@ -763,7 +763,7 @@ function runSim(){
 }
 
 function resetAll(){
-  if(simTimer) clearTimeout(simTimer); running=false; step=0; lastFusionProbs=null;
+  if(simTimer) clearTimeout(simTimer); running=false; step=0; lastFusionProbs=null; currentFw=null;
   $('runBtn').classList.remove('running'); $('runBtn').textContent='▶ Run Fusion';
   rawVisible=false; sortedView=false; selectedRow=-1;
   for(let i=0;i<STEPS.length;i++){const el=$('pb'+i);if(el)el.classList.remove('done','cur');}
@@ -789,7 +789,7 @@ const getSpeed=()=>[1500,1100,750,450,200][+$('speedSlider').value-1];
 
 // -- NN CANVAS --
 const nnCanvas=$('nnCanvas'), nnCtx=nnCanvas.getContext('2d');
-let nnW=0, nnH=340, nnNodes=[], nnConnAlpha=[], nnPulse=0, hoveredNode=null;
+let nnW=0, nnH=360, nnNodes=[], nnConnAlpha=[], nnPulse=0, hoveredNode=null;
 const NN_LAYERS=[
   {label:'Input',size:784,color:FNN_COLOR,type:'fnn'},
   {label:'Dense 1',size:512,color:FNN_COLOR,type:'fnn'},
@@ -805,7 +805,8 @@ const NN_VIS=[12,10,8,7,8,7,8,10];
 function computeNNLayout(){
   nnW=nnCanvas.offsetWidth||800; nnCanvas.width=nnW; nnCanvas.height=nnH;
   nnNodes=[]; nnConnAlpha=new Array(NN_LAYERS.length).fill(0);
-  const padX=48, padY=30, usableW=nnW-padX*2, usableH=nnH-padY*2;
+  // Leave extra right margin (110px) for output layer class labels
+  const padX=48, padXRight=120, padY=30, usableW=nnW-padX-padXRight, usableH=nnH-padY*2;
   const xs=NN_LAYERS.map((_,i)=>padX+i/(NN_LAYERS.length-1)*usableW);
   NN_LAYERS.forEach((layer,li)=>{
     const count=NN_VIS[li]; const arr=[];
@@ -819,13 +820,48 @@ function computeNNLayout(){
 
 function resetNNNodes(){nnNodes.forEach(layer=>layer.forEach(n=>{n.active=false;n.value=0;}));}
 
-function setNNActiveStep(stepIdx){
+// Stores the latest forward pass so diagram nodes can use real activations
+let currentFw=null;
+
+function getLayerActivations(li,fw){
+  if(!fw) return new Array(NN_VIS[li]).fill(0.35);
+  if(li===0){// input pixels — sample from flat input
+    const inp=fw.input; const step=Math.max(1,Math.floor(inp.length/NN_VIS[0]));
+    return Array.from({length:NN_VIS[0]},(_,i)=>inp[Math.min(i*step,inp.length-1)]||0);
+  }
+  if(li===1)return fw.fnnLayers[1];  // Dense1 512
+  if(li===2)return fw.fnnLayers[2];  // Dense2 256
+  if(li===3)return fw.fnnLayers[3];  // Dense3 128
+  if(li===4){// CNN: flatten conv2Maps and sample
+    const flat=[]; fw.conv2Maps.forEach(m=>m.forEach(v=>flat.push(v)));
+    const step=Math.max(1,Math.floor(flat.length/NN_VIS[4]));
+    return Array.from({length:NN_VIS[4]},(_,i)=>flat[Math.min(i*step,flat.length-1)]||0);
+  }
+  if(li===5)return fw.cnnFc;         // CNN FC 128
+  if(li===6){// Concat 256-d: interleave FNN+CNN features
+    const f=fw.fnnLayers[3], c=fw.cnnFc;
+    const combined=[...f,...c];
+    const step=Math.max(1,Math.floor(combined.length/NN_VIS[6]));
+    return Array.from({length:NN_VIS[6]},(_,i)=>combined[Math.min(i*step,combined.length-1)]||0);
+  }
+  if(li===7)return fw.fusionProbs;   // Output: real softmax probabilities (10 values)
+  return new Array(NN_VIS[li]).fill(0);
+}
+
+function setNNActiveStep(stepIdx,fw){
   nnActiveStep=stepIdx;
+  if(fw) currentFw=fw;
   const layerMap={0:0,1:1,2:2,3:3,4:4,5:4,6:5,7:6,8:7};
   const activeLayerIdx=layerMap[stepIdx]??-1;
   nnNodes.forEach((layer,li)=>{
-    const active=li<=activeLayerIdx;
-    layer.forEach(n=>{n.active=active; n.value=active?0.4+Math.random()*0.5:0;});
+    if(li>activeLayerIdx){layer.forEach(n=>{n.active=false;n.value=0;});return;}
+    const acts=getLayerActivations(li,currentFw);
+    const stride=Math.max(1,Math.floor(acts.length/layer.length));
+    layer.forEach((n,ni)=>{
+      const v=acts[Math.min(ni*stride,acts.length-1)]||0;
+      n.active=v>0.02;
+      n.value=v;
+    });
   });
   nnConnAlpha=NN_LAYERS.map((_,i)=>i<=activeLayerIdx?1:0);
 }
@@ -849,14 +885,60 @@ function drawNNCanvas(){
       }
     }));
   }
+
+  const isOutputActive=nnActiveStep>=8&&currentFw;
+  const probs=isOutputActive?currentFw.fusionProbs:null;
+  const winnerIdx=probs?probs.indexOf(Math.max(...probs)):-1;
+
   nnNodes.forEach((layer,li)=>layer.forEach((n,ni)=>{
-    const col=hexToRgb(n.color), r=n.active?5.5:3.5;
-    if(n.active){nnCtx.beginPath();nnCtx.arc(n.x,n.y,r+5,0,Math.PI*2);nnCtx.fillStyle=`rgba(${col.r},${col.g},${col.b},.1)`;nnCtx.fill();}
+    const col=hexToRgb(n.color);
+    const isOut=li===NN_LAYERS.length-1;
+    // For output layer: radius reflects probability
+    let r;
+    if(isOut&&probs){
+      const p=probs[ni]||0;
+      r=3.5+p*14; // winner gets big, low-prob stay small
+    } else {
+      r=n.active?5.5:3.5;
+    }
+    // Glow
+    if(n.active){
+      const glowR=isOut&&probs?(r+6+probs[ni]*10):(r+5);
+      nnCtx.beginPath();nnCtx.arc(n.x,n.y,glowR,0,Math.PI*2);
+      const glowA=isOut&&ni===winnerIdx?0.28:0.1;
+      nnCtx.fillStyle=`rgba(${col.r},${col.g},${col.b},${glowA})`;nnCtx.fill();
+    }
     nnCtx.beginPath(); nnCtx.arc(n.x,n.y,r,0,Math.PI*2);
-    nnCtx.fillStyle=n.active?`rgba(${col.r},${col.g},${col.b},${0.25+n.value*0.5})`:`rgba(${col.r},${col.g},${col.b},.08)`;
-    nnCtx.fill(); nnCtx.strokeStyle=n.active?`rgba(${col.r},${col.g},${col.b},.85)`:`rgba(${col.r},${col.g},${col.b},.2)`; nnCtx.lineWidth=n.active?1.2:.5; nnCtx.stroke();
+    let fillA;
+    if(isOut&&probs){fillA=0.15+probs[ni]*0.75;}
+    else{fillA=n.active?0.25+n.value*0.5:0.08;}
+    nnCtx.fillStyle=n.active||isOut?`rgba(${col.r},${col.g},${col.b},${fillA})`:`rgba(${col.r},${col.g},${col.b},.08)`;
+    nnCtx.fill();
+    nnCtx.strokeStyle=(n.active||isOut&&probs)?`rgba(${col.r},${col.g},${col.b},${ni===winnerIdx?.95:.55})`:`rgba(${col.r},${col.g},${col.b},.2)`;
+    nnCtx.lineWidth=(ni===winnerIdx&&isOut)?2:n.active?1.2:.5; nnCtx.stroke();
     if(hoveredNode&&hoveredNode.li===li&&hoveredNode.ni===ni){nnCtx.beginPath();nnCtx.arc(n.x,n.y,r+3,0,Math.PI*2);nnCtx.strokeStyle='rgba(255,255,255,.9)';nnCtx.lineWidth=1.2;nnCtx.stroke();}
+
+    // Output layer: draw class label + % to the right of each node
+    if(isOut&&probs){
+      const p=probs[ni]||0;
+      const pct=Math.round(p*100);
+      const isWin=ni===winnerIdx;
+      const lx=n.x+r+6;
+      nnCtx.textAlign='left';
+      nnCtx.font=isWin?`bold 9px Space Mono, monospace`:`9px Space Mono, monospace`;
+      nnCtx.fillStyle=isWin?`rgba(${col.r},${col.g},${col.b},1)`:`rgba(${col.r},${col.g},${col.b},${0.3+p*0.6})`;
+      // Class name truncated
+      const name=LABELS[ni].length>8?LABELS[ni].slice(0,7)+'…':LABELS[ni];
+      nnCtx.fillText(`${name} ${pct}%`,lx,n.y+3);
+      // bar
+      if(pct>0){
+        const bw=Math.round(p*40);
+        nnCtx.fillStyle=`rgba(${col.r},${col.g},${col.b},${isWin?.5:.18})`;
+        nnCtx.fillRect(lx,n.y+6,bw,3);
+      }
+    }
   }));
+
   nnCtx.textAlign='center'; nnCtx.font='9px Space Mono, monospace';
   NN_LAYERS.forEach((layer,li)=>{
     const col=hexToRgb(layer.color);
@@ -882,7 +964,14 @@ function buildNetLegend(){
 nnCanvas.addEventListener('mousemove',e=>{
   const rect=nnCanvas.getBoundingClientRect(), mx=(e.clientX-rect.left)*(nnCanvas.width/rect.width), my=(e.clientY-rect.top)*(nnCanvas.height/rect.height);
   let found=null; nnNodes.forEach((layer,li)=>layer.forEach((n,ni)=>{if(Math.hypot(mx-n.x,my-n.y)<12) found={li,ni,n};})); hoveredNode=found;
-  if(found){const l=NN_LAYERS[found.li];$('nnHoverInfo').textContent=`${l.label} · node ${found.ni+1}/${NN_VIS[found.li]} · ${found.n.active?'active':'idle'} · val ${found.n.value.toFixed(3)}`;$('nnHoverInfo').style.color=l.color;}
+  if(found){
+    const l=NN_LAYERS[found.li];
+    const isOut=found.li===NN_LAYERS.length-1;
+    const label=isOut?`${l.label} · ${LABELS[found.ni]} (class ${found.ni})`:`${l.label} · node ${found.ni+1}/${NN_VIS[found.li]}`;
+    const valStr=isOut&&currentFw?`prob=${(currentFw.fusionProbs[found.ni]*100).toFixed(1)}%`:`val=${found.n.value.toFixed(3)} · ${found.n.active?'active':'idle'}`;
+    $('nnHoverInfo').textContent=`${label} · ${valStr}`;
+    $('nnHoverInfo').style.color=l.color;
+  }
   else{$('nnHoverInfo').textContent='hover nodes to inspect · watch streams animate during forward pass';$('nnHoverInfo').style.color='var(--muted)';}
 });
 nnCanvas.addEventListener('mouseleave',()=>{hoveredNode=null;});
