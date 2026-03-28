@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>FNN — Fashion MNIST Configurable</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0c0c0f;--surface:#13131a;--surface2:#1a1a24;--border:rgba(255,255,255,.07);--border2:rgba(255,255,255,.13);
+  --text:#e8e6f0;--muted:#7a7890;--accent:#a78bfa;--green:#34d399;--red:#ef4444;--amber:#f59e0b;--cyan:#38bdf8;
+  --mono:'DM Mono',monospace;--display:'Syne',sans-serif
+            --bg-dark: #0a0a0f;
+            --bg-surface: #111118;
+            --bg-card: #15151f;
+            --border: rgba(255, 255, 255, 0.08);
+            --text-primary: #ffffff;
+            --text-secondary: #8b8b9b;
+            --fnn: #f97316;
+            --cnn: #06b6d4;
+            --fusion: #a855f7;
+            --gradient-fnn: linear-gradient(135deg, #f97316, #fdba74);
+            --gradient-cnn: linear-gradient(135deg, #06b6d4, #67e8f9);
+            --gradient-fusion: linear-gradient(135deg, #a855f7, #c084fc);
+        
+}
+body{background:var(--bg);color:var(--text);font-family:var(--display);min-height:100vh}
+ /* Navigation Bar */
+        .navbar {
+            background: var(--bg-surface);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        .nav-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 70px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--fnn), var(--fusion));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .logo-text {
+            font-size: 20px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--fnn), var(--cnn), var(--fusion));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 8px;
+            background: var(--bg-card);
+            padding: 4px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+        .nav-link {
+            padding: 8px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            color: var(--text-secondary);
+            font-weight: 500;
+            transition: all 0.3s ease;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .nav-link:hover {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .nav-link.active {
+            color: white;
+            background: linear-gradient(135deg, rgba(249, 115, 22, 0.2), rgba(168, 85, 247, 0.2));
+            border: 1px solid rgba(168, 85, 247, 0.3);
+        }
+
+        .nav-link.fnn.active { background: rgba(249, 115, 22, 0.2); border-color: rgba(249, 115, 22, 0.4); }
+        .nav-link.cnn.active { background: rgba(6, 182, 212, 0.2); border-color: rgba(6, 182, 212, 0.4); }
+        .nav-link.fusion.active { background: rgba(168, 85, 247, 0.2); border-color: rgba(168, 85, 247, 0.4); }
+.shell{max-width:1180px;margin:0 auto;padding:32px 24px 56px}
+header{display:flex;flex-direction:column;gap:16px;margin-bottom:22px}
+.topbar{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:14px}
+.title-block h1{font-size:26px;font-weight:700;letter-spacing:-.5px;line-height:1}
+.title-block .sub{font-size:11px;color:var(--muted);font-family:var(--mono);margin-top:6px}
+.controls,.config-row,.hidden-sizes-wrap{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.config-panel{background:var(--surface);border:.5px solid var(--border);border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:12px}
+.cfg-block{display:flex;align-items:center;gap:8px}
+.cfg-block label,.speed-row label,.note-line{font-family:var(--mono);font-size:11px;color:var(--muted)}
+.item-select,.num-input,.act-select,.size-input{background:var(--surface2);border:.5px solid var(--border2);color:var(--text);font-family:var(--display);font-size:13px;padding:8px 12px;border-radius:8px;outline:none}
+.num-input{width:82px}
+.size-chip{display:flex;align-items:center;gap:7px;background:var(--surface2);border:.5px solid var(--border2);padding:8px 10px;border-radius:9px}
+.size-chip span{font-family:var(--mono);font-size:10px;color:var(--muted)}
+.size-input{width:78px;padding:6px 8px;border:none;background:transparent}
+.btn{font-family:var(--display);font-size:13px;font-weight:600;padding:8px 18px;border-radius:8px;cursor:pointer;border:none;transition:opacity .15s,transform .08s}
+.btn:active{transform:scale(.97)}
+.btn-run{background:var(--accent);color:#0c0c0f}.btn-run.running{background:var(--surface2);color:var(--muted);border:.5px solid var(--border2);cursor:default}
+.btn-reset{background:transparent;color:var(--muted);border:.5px solid var(--border2)}
+.btn-apply{background:rgba(167,139,250,.12);color:var(--accent);border:.5px solid rgba(167,139,250,.28)}
+.speed-row{display:flex;align-items:center;gap:6px}.speed-row input[type=range]{width:72px;accent-color:var(--accent)}
+.speed-val{font-family:var(--mono);font-size:11px;color:var(--accent);min-width:18px}
+.progress-bar{display:flex;gap:5px;margin-bottom:22px}.pb-step{flex:1;height:3px;border-radius:2px;background:var(--surface2);transition:background .3s,opacity .3s}.pb-step.done{background:var(--accent)}.pb-step.current{background:var(--accent);opacity:.45}
+.main-grid{display:grid;grid-template-columns:196px 1fr;gap:20px;align-items:start}
+.left-panel{display:flex;flex-direction:column;gap:12px}
+.img-card{background:var(--surface);border:.5px solid var(--border);border-radius:14px;padding:14px;display:flex;flex-direction:column;align-items:center;gap:9px}
+.img-label{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:.08em;align-self:flex-start;text-transform:uppercase}
+canvas#px{width:168px;height:168px;image-rendering:pixelated;border-radius:7px;border:.5px solid var(--border2);display:block;cursor:crosshair}
+.pixel-inspect{font-family:var(--mono);font-size:9px;color:var(--muted);text-align:center;min-height:13px}
+.flat-wrap{width:100%}.flat-lrow{display:flex;justify-content:space-between;margin-bottom:3px}.flat-lrow span{font-family:var(--mono);font-size:9px;color:var(--muted)}
+canvas#flat{width:168px;height:16px;display:block;border-radius:3px}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}.stat{background:var(--surface2);border-radius:8px;padding:8px 10px}.stat .sv{font-family:var(--mono);font-size:13px;font-weight:500;color:var(--text)}.stat .sk{font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:2px}
+.right-panel{display:flex;flex-direction:column;gap:9px}
+.layer-card{background:var(--surface);border:.5px solid var(--border);border-radius:14px;overflow:hidden;transition:border-color .25s}.layer-card.active-card{border-color:var(--ca,var(--border2))}
+.layer-header{display:flex;align-items:center;gap:10px;padding:12px 16px;cursor:pointer;user-select:none}.layer-pill{font-family:var(--mono);font-size:10px;font-weight:500;padding:2px 9px;border-radius:20px;flex-shrink:0}
+.layer-name{font-size:13px;font-weight:600;color:var(--text);flex:1}.layer-meta{font-family:var(--mono);font-size:10px;color:var(--muted);display:flex;align-items:center;gap:5px}.active-badge{font-family:var(--mono);font-size:9px;background:var(--surface2);padding:1px 6px;border-radius:4px;color:var(--muted)}
+.chev{font-size:10px;color:var(--muted);transition:transform .2s}.layer-card.collapsed .chev{transform:rotate(-90deg)}.layer-body{padding:0 16px 13px}.layer-card.collapsed .layer-body{display:none}
+.neurons-track{display:flex;gap:3px;flex-wrap:wrap;align-items:center;margin-bottom:6px}.n{width:12px;height:12px;border-radius:50%;background:var(--surface2);border:.5px solid rgba(255,255,255,.08);transition:background .2s,border-color .2s,transform .18s;position:relative}
+.n.lit{transform:scale(1.18)}.n-tip{position:absolute;left:16px;top:-3px;background:#1a1a24;border:.5px solid var(--border2);border-radius:6px;padding:3px 7px;font-family:var(--mono);font-size:9px;color:var(--text);white-space:nowrap;z-index:20;pointer-events:none;opacity:0;transition:opacity .12s}.n:hover .n-tip{opacity:1}
+.ndots{font-family:var(--mono);font-size:12px;color:var(--muted);padding:0 3px}.ntotal{font-family:var(--mono);font-size:9px;color:rgba(122,120,144,.45)}
+.layer-hint{font-family:var(--mono);font-size:10px;color:var(--muted);line-height:1.5;background:rgba(255,255,255,.025);border-radius:6px;padding:6px 9px}.layer-hint span{color:var(--text)}
+.arrow-conn{display:flex;justify-content:center;align-items:center;height:14px;opacity:.2}.arrow-conn svg{width:12px;height:12px}
+.out-toolbar{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap}.tog-btn{font-family:var(--mono);font-size:9px;color:var(--muted);cursor:pointer;padding:2px 8px;border:.5px solid var(--border);border-radius:5px}.tog-btn.on,.tog-btn:hover{background:rgba(255,255,255,.06);color:var(--text)}
+.out-table{width:100%;border-collapse:collapse;margin-bottom:8px}.out-row td{padding:3px 5px;vertical-align:middle}.out-row{cursor:pointer}.out-row:hover{background:rgba(255,255,255,.03)}.out-row.selected{outline:.5px solid rgba(167,139,250,.5)}
+.out-rank,.out-name,.out-pct,.out-logit{font-family:var(--mono)}.out-rank{font-size:10px;color:var(--muted);width:24px;text-align:right}.out-name{font-size:11px;color:var(--muted);width:92px}.out-bar-bg{background:var(--surface2);border-radius:3px;height:7px;overflow:hidden;width:150px}.out-bar-fill{height:7px;border-radius:3px;width:0%;transition:width .7s cubic-bezier(.4,0,.2,1)}.out-pct{font-size:11px;width:36px;text-align:right;color:var(--muted)}.out-logit{font-size:9px;width:44px;text-align:right;color:var(--muted)}
+.out-row.winner .out-name,.out-row.winner .out-pct,.out-row.winner .out-rank{color:var(--green)}.out-row.winner .out-bar-fill{background:var(--green)}.out-row.r2 .out-name,.out-row.r2 .out-pct{color:var(--accent)}.out-row.r2 .out-bar-fill{background:var(--accent)}.out-row.r3 .out-name,.out-row.r3 .out-pct{color:#60a5fa}.out-row.r3 .out-bar-fill{background:#60a5fa}.out-row.low .out-bar-fill{background:rgba(120,116,140,.25)}
+.conf-gauge{display:flex;align-items:center;gap:8px;margin-top:6px}.gauge-label,.gauge-val{font-family:var(--mono);font-size:10px}.gauge-label{color:var(--muted);white-space:nowrap}.gauge-track{flex:1;height:4px;background:var(--surface2);border-radius:2px;overflow:hidden}.gauge-fill{height:4px;border-radius:2px;background:linear-gradient(90deg,#a78bfa,#34d399);width:0%;transition:width .9s cubic-bezier(.4,0,.2,1)}.gauge-val{font-weight:500;color:var(--green);min-width:32px;text-align:right}
+.winner-badge{display:none;align-items:center;gap:6px;background:rgba(52,211,153,.08);border:.5px solid rgba(52,211,153,.25);border-radius:7px;padding:5px 12px;font-family:var(--mono);font-size:11px;color:var(--green);margin-top:8px}
+.nn-section{margin-top:40px}.nn-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:16px}.nn-title{font-size:16px;font-weight:600}.nn-sub{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:2px}.nn-legend{display:flex;flex-wrap:wrap;gap:14px}.nn-legend-item{display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:10px;color:var(--muted)}.nn-legend-dot{width:9px;height:9px;border-radius:50%}
+.nn-wrap{background:var(--surface);border:.5px solid var(--border);border-radius:16px;padding:24px 16px 20px}#nnCanvas{display:block;width:100%;cursor:pointer}.nn-layer-labels{display:flex;justify-content:space-between;margin-top:10px;padding:0 8px}.nn-layer-label{flex:1;text-align:center;font-family:var(--mono);font-size:10px;color:var(--muted)}.nn-layer-label span{display:block;font-size:9px;color:rgba(122,120,144,.5);margin-top:1px}.nn-hover-info{font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;min-height:16px;margin-top:8px}
+@media(max-width:820px){.main-grid{grid-template-columns:1fr}.shell{padding:24px 16px 40px}}
+</style>
+</head>
+<body>
+<!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-content">
+                <div class="logo">
+                    <div class="logo-icon">🧠</div>
+                    <div class="logo-text">Fashion MNIST Explorer</div>
+                </div>
+                <div class="nav-links">
+                    <a class="nav-link fnn" data-page="fnn" href="fnn.html">FNN Model</a>
+                    <a class="nav-link cnn" data-page="cnn" href="cnn.html">CNN Model</a>
+                    <a class="nav-link fusion" data-page="fusion" href="fnn_cnn.html">Fusion Model</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+<div class="shell">
+  <header>
+    <div class="topbar">
+      <div class="title-block">
+        <h1>Feedforward Neural Network</h1>
+        <div class="sub">Fashion MNIST · configurable architecture simulator</div>
+      </div>
+      <div class="controls">
+        <div class="speed-row">
+          <label>speed</label>
+          <input type="range" id="speedSlider" min="1" max="5" step="1" value="3">
+          <span class="speed-val" id="speedVal">3×</span>
+        </div>
+        <select class="item-select" id="itemSel">
+          <option value="tshirt">T-shirt</option>
+          <option value="trouser">Trouser</option>
+          <option value="pullover">Pullover</option>
+          <option value="dress">Dress</option>
+          <option value="coat" selected>Coat</option>
+          <option value="sandal">Sandal</option>
+          <option value="shirt">Shirt</option>
+          <option value="sneaker">Sneaker</option>
+          <option value="bag">Bag</option>
+          <option value="boot">Ankle boot</option>
+        </select>
+        <button class="btn btn-reset" onclick="resetAll()">Reset</button>
+        <button class="btn btn-run" id="runBtn" onclick="runSim()">▶ Run</button>
+      </div>
+    </div>
+
+    <div class="config-panel">
+      <div class="config-row">
+        <div class="cfg-block">
+          <label for="hiddenCount">hidden layers</label>
+          <input class="num-input" id="hiddenCount" type="number" min="1" max="5" value="3">
+        </div>
+        <div class="cfg-block">
+          <label for="activationSel">activation</label>
+          <select class="act-select" id="activationSel">
+            <option value="relu" selected>ReLU</option>
+            <option value="leaky">Leaky ReLU</option>
+            <option value="tanh">Tanh</option>
+            <option value="sigmoid">Sigmoid</option>
+          </select>
+        </div>
+        <button class="btn btn-apply" onclick="applyArchitecture()">Apply architecture</button>
+      </div>
+      <div id="hiddenSizesWrap" class="hidden-sizes-wrap"></div>
+      <div class="note-line">ReLU dead neurons are shown in red. Leaky negative neurons are amber. Tanh negative neurons are cyan.</div>
+    </div>
+  </header>
+
+  <div class="progress-bar" id="progressBar"></div>
+
+  <div class="main-grid">
+    <div class="left-panel">
+      <div class="img-card">
+        <div class="img-label">28 × 28 input</div>
+        <canvas id="px" width="28" height="28"></canvas>
+        <div class="pixel-inspect" id="pixInf">hover pixel to inspect</div>
+        <div class="flat-wrap">
+          <div class="flat-lrow"><span>→ 784 values</span><span id="activePixCount">—</span></div>
+          <canvas id="flat" width="168" height="16"></canvas>
+        </div>
+      </div>
+      <div class="stat-grid">
+        <div class="stat"><div class="sv" id="statInputs">784</div><div class="sk">inputs</div></div>
+        <div class="stat"><div class="sv" id="statHiddenCount">3</div><div class="sk">hidden layers</div></div>
+        <div class="stat"><div class="sv" id="statActivation">ReLU</div><div class="sk">activation</div></div>
+        <div class="stat"><div class="sv" id="statHiddenSizes">256-128-64</div><div class="sk">hidden sizes</div></div>
+      </div>
+    </div>
+
+    <div class="right-panel" id="layersContainer"></div>
+  </div>
+
+  <div class="nn-section">
+    <div class="nn-header">
+      <div>
+        <div class="nn-title">Network architecture</div>
+        <div class="nn-sub">Hover nodes to inspect · connections animate during forward pass</div>
+      </div>
+      <div class="nn-legend" id="nnLegend"></div>
+    </div>
+    <div class="nn-wrap">
+      <canvas id="nnCanvas" height="300"></canvas>
+      <div class="nn-layer-labels" id="nnLabels"></div>
+      <div class="nn-hover-info" id="nnHoverInfo">click any neuron node to inspect</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const LABELS=['T-shirt','Trouser','Pullover','Dress','Coat','Sandal','Shirt','Sneaker','Bag','Ankle boot'];
+const LM={tshirt:0,trouser:1,pullover:2,dress:3,coat:4,sandal:5,shirt:6,sneaker:7,bag:8,boot:9};
+const INPUT_SIZE=784, OUTPUT_SIZE=10;
+const INPUT_COLOR='#60a5fa', OUTPUT_COLOR='#34d399', DEAD_COLOR='#ef4444', NEG_COLOR='#f59e0b', TANH_NEG='#38bdf8';
+const HIDDEN_COLORS=['#a78bfa','#c084fc','#e879f9','#f472b6','#fb7185'];
+let architecture={hiddenSizes:[256,128,64],activation:'relu'};
+let item='coat',pixData=null,simTimer=null,step=-1,running=false,rawVisible=false,sortedView=false,selectedRow=-1,lastProbs=null,lastLogits=null,forwardCache=null;
+const nnCanvas=document.getElementById('nnCanvas');
+const nnCtx=nnCanvas.getContext('2d');
+let nnW=0,nnH=300,nnNodes=[],nnConnAlpha=[],nnVisibleCounts=[],nnActiveLayer=-1,hoveredNode=null,nnPulse=0;
+const $=id=>document.getElementById(id);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const hexToRgb=h=>({r:parseInt(h.slice(1,3),16),g:parseInt(h.slice(3,5),16),b:parseInt(h.slice(5,7),16)});
+const rgba=(hex,a)=>{const {r,g,b}=hexToRgb(hex);return `rgba(${r},${g},${b},${a})`;};
+const actName=v=>({relu:'ReLU',leaky:'Leaky ReLU',tanh:'Tanh',sigmoid:'Sigmoid'})[v]||v;
+const getSpeed=()=>[1200,900,650,400,200][+$('speedSlider').value-1];
+const layerSizes=()=>[INPUT_SIZE,...architecture.hiddenSizes,OUTPUT_SIZE];
+const layerColors=()=>[INPUT_COLOR,...HIDDEN_COLORS.slice(0,architecture.hiddenSizes.length),OUTPUT_COLOR];
+const layerTitles=()=>layerSizes().map((s,i)=>i===0?{name:'Input layer',pill:'input'}:i===layerSizes().length-1?{name:'Output layer',pill:'output'}:{name:`Hidden layer ${i}`,pill:`hidden ${i}`});
+const visCount=(size,idx,total)=>idx===0?12:idx===total-1?Math.min(10,size):size>=256?14:size>=128?12:size>=64?10:Math.min(8,size);
+const epsilon=1e-6;
+
+function activation(z){
+  switch(architecture.activation){
+    case 'relu': return Math.max(0,z);
+    case 'leaky': return z>=0 ? z : 0.12*z;
+    case 'tanh': return Math.tanh(z);
+    case 'sigmoid': return 1/(1+Math.exp(-z));
+    default: return Math.max(0,z);
+  }
+}
+
+function stats(arr){
+  const n=arr.length||1;
+  let sum=0,abs=0,sq=0,pos=0,neg=0,zero=0,max=0;
+  for(const v of arr){
+    sum+=v; abs+=Math.abs(v); sq+=v*v; if(v>0)pos++; if(v<0)neg++; if(Math.abs(v)<=epsilon)zero++; if(Math.abs(v)>max)max=Math.abs(v);
+  }
+  return {mean:sum/n,meanAbs:abs/n,energy:Math.sqrt(sq/n),posRatio:pos/n,negRatio:neg/n,zeroRatio:zero/n,maxAbs:max};
+}
+
+function visualForValue(layerIdx,v){
+  const last=layerSizes().length-1;
+  if(layerIdx===0){
+    const t=clamp(v,0,1);
+    return t>0.06 ? {bg:rgba(INPUT_COLOR,.14+t*.7),border:rgba(INPUT_COLOR,.75),lit:true,label:'active'} : {bg:'rgba(255,255,255,.05)',border:'rgba(255,255,255,.08)',lit:false,label:'off'};
+  }
+  if(layerIdx===last){
+    const t=clamp(v,0,1);
+    return t>0.05 ? {bg:rgba(OUTPUT_COLOR,.15+t*.7),border:rgba(OUTPUT_COLOR,.8),lit:true,label:'prob'} : {bg:'rgba(255,255,255,.05)',border:'rgba(255,255,255,.08)',lit:false,label:'low'};
+  }
+  if(architecture.activation==='relu'){
+    if(v<=epsilon) return {bg:'rgba(239,68,68,.24)',border:'rgba(239,68,68,.6)',lit:false,label:'dead'};
+    const t=clamp(v/1.4,0,1); return {bg:rgba(layerColors()[layerIdx],.16+t*.68),border:rgba(layerColors()[layerIdx],.76),lit:true,label:'active'};
+  }
+  if(architecture.activation==='leaky'){
+    if(v<0){ const t=clamp(Math.abs(v)/0.25,0,1); return {bg:`rgba(245,158,11,${0.16+t*.48})`,border:'rgba(245,158,11,.72)',lit:true,label:'negative'}; }
+    const t=clamp(v/1.4,0,1); return {bg:rgba(layerColors()[layerIdx],.16+t*.68),border:rgba(layerColors()[layerIdx],.76),lit:true,label:'positive'};
+  }
+  if(architecture.activation==='tanh'){
+    if(v<-0.08){ const t=clamp(Math.abs(v),0,1); return {bg:`rgba(56,189,248,${0.14+t*.55})`,border:'rgba(56,189,248,.72)',lit:true,label:'negative'}; }
+    if(v>0.08){ const t=clamp(Math.abs(v),0,1); return {bg:rgba(layerColors()[layerIdx],.16+t*.68),border:rgba(layerColors()[layerIdx],.76),lit:true,label:'positive'}; }
+    return {bg:'rgba(255,255,255,.05)',border:'rgba(255,255,255,.08)',lit:false,label:'near-zero'};
+  }
+  if(v>=0.66){ const t=clamp(v,0,1); return {bg:rgba(layerColors()[layerIdx],.16+t*.68),border:rgba(layerColors()[layerIdx],.76),lit:true,label:'high'}; }
+  if(v>=0.33) return {bg:rgba(layerColors()[layerIdx],.18),border:rgba(layerColors()[layerIdx],.35),lit:false,label:'mid'};
+  return {bg:'rgba(255,255,255,.05)',border:'rgba(255,255,255,.08)',lit:false,label:'low'};
+}
+
+function badgeForLayer(idx,arr){
+  const last=layerSizes().length-1;
+  if(idx===0) return `${arr.filter(v=>v>0.06).length} active`;
+  if(idx===last) return '';
+  if(architecture.activation==='relu') return `${arr.filter(v=>v>epsilon).length} active · ${arr.filter(v=>v<=epsilon).length} dead`;
+  if(architecture.activation==='leaky') return `${arr.filter(v=>v>0).length} pos · ${arr.filter(v=>v<0).length} neg`;
+  if(architecture.activation==='tanh'){
+    const pos=arr.filter(v=>v>0.08).length, neg=arr.filter(v=>v<-0.08).length, z=arr.length-pos-neg;
+    return `${pos} pos · ${neg} neg · ${z} ~0`;
+  }
+  return `${arr.filter(v=>v>=0.66).length} high · ${arr.filter(v=>v<0.33).length} low`;
+}
+
+function makePattern(t){
+  const p=new Uint8ClampedArray(784);
+  const s=(x,y,v)=>{if(x>=0&&x<28&&y>=0&&y<28)p[y*28+x]=v};
+  const r=(x1,y1,x2,y2,v)=>{for(let y=y1;y<=y2;y++)for(let x=x1;x<=x2;x++)s(x,y,v)};
+  const n=(x,y,b,a)=>{let q=(Math.sin(x*7.3+y*13.7)*43758.5453)%1;return Math.max(0,Math.min(255,Math.round(b+q*a)))};
+  if(t==='tshirt'){r(7,10,21,26,200);for(let i=0;i<=5;i++){s(14-i,10+i,0);s(14+i,10+i,0)}for(let i=0;i<7;i++){r(7-i,10+i,10-i,12+i,180);r(18+i,10+i,21+i,12+i,180)}for(let y=12;y<=25;y++)for(let x=8;x<=20;x++)p[y*28+x]=n(x,y,190,25)}
+  else if(t==='trouser'){r(7,4,21,7,220);r(7,7,14,26,200);r(15,7,21,26,200);r(14,14,15,26,0);for(let y=8;y<=25;y++)for(let x=7;x<=21;x++)if(p[y*28+x]>10)p[y*28+x]=n(x,y,195,20)}
+  else if(t==='pullover'){r(5,11,23,26,190);r(11,10,17,13,80);for(let i=0;i<9;i++){r(5-i,11+i,8-i,14+i,175);r(20+i,11+i,23+i,14+i,175)}for(let y=11;y<=26;y++)for(let x=6;x<=22;x++)if(p[y*28+x]>10)p[y*28+x]=n(x,y,185,20)}
+  else if(t==='dress'){r(8,4,20,13,210);for(let i=0;i<=4;i++){s(14-i,4+i,0);s(14+i,4+i,0)}for(let y=13;y<=26;y++){let e=Math.round((y-13)*0.45);r(8-e,y,20+e,y,200)}r(8,13,20,14,160);for(let y=5;y<=26;y++)for(let x=5;x<=23;x++)if(p[y*28+x]>10)p[y*28+x]=n(x,y,200,22)}
+  else if(t==='coat'){r(5,6,23,27,185);for(let i=0;i<=6;i++){r(12-i,6+i,14-i,8+i,240);r(14+i,6+i,16+i,8+i,240)}for(let y=12;y<=26;y+=2)s(14,y,240);r(9,4,19,7,210);r(5,6,9,27,175);r(19,6,23,27,175);r(7,19,11,23,160);r(17,19,21,23,160);for(let y=7;y<=26;y++)for(let x=6;x<=22;x++)if(p[y*28+x]>10)p[y*28+x]=n(x,y,182,18)}
+  else if(t==='sandal'){r(4,22,24,27,220);r(4,17,24,20,190);r(8,10,16,23,190);r(4,14,24,16,190);r(4,8,7,22,190);r(21,8,24,22,190);r(10,7,18,10,210)}
+  else if(t==='shirt'){r(7,9,21,26,195);r(11,5,17,10,220);for(let i=0;i<4;i++){s(11-i,9+i,220);s(17+i,9+i,220)}r(13,9,15,26,210);for(let y=11;y<=24;y+=3)s(14,y,240);for(let i=0;i<6;i++){r(7-i,9+i,10-i,12+i,180);r(18+i,9+i,21+i,12+i,180)}r(8,13,12,17,175);for(let y=10;y<=25;y++)for(let x=8;x<=20;x++)if(p[y*28+x]>10)p[y*28+x]=n(x,y,190,22)}
+  else if(t==='sneaker'){r(3,21,25,26,220);r(3,19,25,22,200);r(3,11,22,21,185);r(21,12,26,22,190);r(13,9,19,20,200);for(let y=11;y<=18;y+=2)r(13,y,19,y+1,240)}
+  else if(t==='bag'){r(5,8,23,26,195);for(let x=8;x<=12;x++){s(x,6,210);s(x,7,210)}for(let x=16;x<=20;x++){s(x,6,210);s(x,7,210)}for(let i=0;i<3;i++){s(8+i,5-i,200);s(20-i,5-i,200)}r(5,8,23,10,215);r(8,15,20,24,175);r(8,15,20,16,205);for(let y=9;y<=25;y++)for(let x=6;x<=22;x++)if(p[y*28+x]>10)p[y*28+x]=n(x,y,192,20)}
+  else if(t==='boot'){r(5,24,23,27,220);r(8,8,20,25,190);r(6,18,22,25,195);r(5,21,15,26,200);for(let y=9;y<=22;y++)s(19,y,240);for(let y=10;y<=18;y+=3){s(10,y,230);s(11,y,230)}for(let y=9;y<=24;y++)for(let x=7;x<=21;x++)if(p[y*28+x]>10)p[y*28+x]=n(x,y,188,18)}
+  return p;
+}
+
+function drawImg(){
+  const cv=$('px'),ctx=cv.getContext('2d');
+  pixData=makePattern(item);
+  const id=ctx.createImageData(28,28);
+  for(let i=0;i<784;i++){const v=pixData[i];id.data[i*4]=v;id.data[i*4+1]=v;id.data[i*4+2]=v;id.data[i*4+3]=255}
+  ctx.putImageData(id,0,0);
+  const fc=$('flat'),fctx=fc.getContext('2d');
+  fctx.clearRect(0,0,168,16);
+  for(let i=0;i<168;i++){const idx=Math.floor(i/168*784),v=pixData[idx],a=v/255*.85+.04;fctx.fillStyle=`rgba(96,165,250,${a})`;fctx.fillRect(i,0,1,16)}
+  $('activePixCount').textContent=pixData.filter(v=>v>10).length+' active';
+}
+
+function baseLogits(){
+  return [[2.8,0.1,0.4,0.3,0.6,0.0,1.2,0.0,0.1,0.0],[0.1,3.5,0.0,0.2,0.1,0.0,0.0,0.0,0.1,0.0],[0.3,0.0,2.6,0.1,0.9,0.0,0.5,0.0,0.1,0.0],[0.2,0.1,0.2,3.2,0.3,0.0,0.4,0.0,0.1,0.0],[0.5,0.0,0.8,0.2,3.0,0.0,0.7,0.0,0.0,0.0],[0.0,0.0,0.0,0.0,0.0,3.4,0.0,1.1,0.0,0.8],[1.0,0.0,0.6,0.3,0.5,0.0,2.7,0.0,0.1,0.0],[0.0,0.0,0.0,0.0,0.0,0.9,0.0,3.1,0.0,1.0],[0.1,0.1,0.0,0.1,0.0,0.1,0.1,0.1,3.6,0.0],[0.0,0.0,0.0,0.0,0.0,0.7,0.0,0.8,0.0,3.2]];
+}
+
+function computeForwardPass(){
+  const key=[item,architecture.activation,architecture.hiddenSizes.join('-')].join('|');
+  if(forwardCache && forwardCache.key===key) return forwardCache.data;
+  const ci=LM[item];
+  const layers=[];
+  const input=Array.from(pixData||makePattern(item),v=>v/255);
+  layers.push(input);
+  let prev=input;
+  architecture.hiddenSizes.forEach((size,li)=>{
+    const st=stats(prev);
+    const arr=Array.from({length:size},(_,i)=>{
+      const a=prev[(i*7 + li*11 + ci*3)%prev.length] || 0;
+      const b=prev[(i*17 + 31 + ci*5)%prev.length] || 0;
+      const c=prev[(i*29 + 71 + li*13)%prev.length] || 0;
+      const d=prev[(i*43 + 19)%prev.length] || 0;
+      let z=(1.25*a + 0.95*b - 1.05*c + 0.38*d)+Math.sin((i+1)*(ci+1)*0.19 + (li+1)*1.29)*0.55+Math.cos((i+3)*0.11 + st.meanAbs*4.7)*0.35+Math.sin(st.energy*7.2 + i*0.05)*0.22+(st.posRatio-0.50)*0.28;
+      if(architecture.activation==='relu') z -= (0.62 + li*0.10);
+      if(architecture.activation==='leaky') z -= (0.45 + li*0.08);
+      if(architecture.activation==='tanh') z *= 1.15;
+      if(architecture.activation==='sigmoid') z *= 1.05;
+      return activation(z);
+    });
+    layers.push(arr);
+    prev=arr;
+  });
+  const st=stats(prev);
+  const logits=baseLogits()[ci].map((b,j)=>{
+    let tweak=Math.sin((j+1)*(st.meanAbs+0.08)*6 + architecture.hiddenSizes.length*0.75)*0.20+Math.cos((j+2)*(st.energy+0.04)*4.2 + st.posRatio*3.5)*0.15+Math.sin((j+3)*0.9 + st.negRatio*5.0)*0.08;
+    if(j===ci) tweak += 0.30;
+    return b+tweak;
+  });
+  const maxL=Math.max(...logits), exps=logits.map(v=>Math.exp(v-maxL)), sum=exps.reduce((a,b)=>a+b,0), probs=exps.map(v=>v/sum);
+  layers.push(probs);
+  const data={layers,logits,probs};
+  forwardCache={key,data};
+  return data;
+}
+
+function syncHiddenInputs(){
+  const count=clamp(parseInt($('hiddenCount').value)||1,1,5);
+  $('hiddenCount').value=count;
+  const wrap=$('hiddenSizesWrap'), old=[...wrap.querySelectorAll('input')].map(i=>parseInt(i.value)||64), fallback=[256,128,64,32,16];
+  wrap.innerHTML='';
+  for(let i=0;i<count;i++){
+    const d=document.createElement('div'); d.className='size-chip';
+    d.innerHTML=`<span>hidden ${i+1}</span><input class="size-input" type="number" min="4" max="512" step="4" value="${architecture.hiddenSizes[i]||old[i]||fallback[i]}">`;
+    wrap.appendChild(d);
+  }
+}
+
+function buildProgressBar(){ const pb=$('progressBar'); pb.innerHTML=''; for(let i=0;i<layerSizes().length;i++){const d=document.createElement('div'); d.className='pb-step'; d.id='pb'+i; pb.appendChild(d);} }
+
+function buildNeuronRow(id,count,shown){
+  const el=$(id); el.innerHTML='';
+  for(let i=0;i<shown;i++){ const nd=document.createElement('div'); nd.className='n'; nd.id=`dot-${id}-${i}`; const tip=document.createElement('div'); tip.className='n-tip'; tip.textContent=`neuron ${i+1}/${count}`; nd.appendChild(tip); el.appendChild(nd); }
+  if(count>shown){ const dots=document.createElement('span'); dots.className='ndots'; dots.textContent='···'; el.appendChild(dots); const total=document.createElement('span'); total.className='ntotal'; total.textContent=count+' total'; el.appendChild(total); }
+}
+
+function layerHint(idx,size,total){
+  if(idx===0) return `28×28 image flattened to <span>784 values</span>, normalized 0–1.`;
+  if(idx===total-1) return `Logits are converted with <span>Softmax</span> into final class probabilities.`;
+  if(architecture.activation==='relu') return `Using <span>ReLU</span>. Dead neurons for this input are shown in <span style="color:#ef4444">red</span>.`;
+  if(architecture.activation==='leaky') return `Using <span>Leaky ReLU</span>. Negative outputs are shown in <span style="color:#f59e0b">amber</span>.`;
+  if(architecture.activation==='tanh') return `Using <span>Tanh</span>. Positive and negative responses are both preserved.`;
+  return `Using <span>Sigmoid</span>. Values stay between <span>0 and 1</span>.`;
+}
+
+function pillStyle(idx){ const c=layerColors()[idx]; return `background:${rgba(c,.12)};color:${c}`; }
+function buildOutputBody(){ return `<div class="out-toolbar"><div class="tog-btn" id="rawToggle" onclick="toggleRaw()">show raw logits</div><div class="tog-btn" id="sortToggle" onclick="toggleSort()">sort by confidence</div></div><table class="out-table" id="outTable"></table><div class="conf-gauge"><span class="gauge-label">top confidence</span><div class="gauge-track"><div class="gauge-fill" id="gaugeFill"></div></div><span class="gauge-val" id="gaugeVal">—</span></div><div class="winner-badge" id="winnerBadge"><span>✓ predicted:</span><span id="winnerName">—</span></div>`; }
+
+function buildLayerCards(){
+  const box=$('layersContainer'), sizes=layerSizes(), titles=layerTitles(); box.innerHTML='';
+  for(let i=0;i<sizes.length;i++){
+    const out=i===sizes.length-1;
+    const meta=out ? `${sizes[i]} neurons · Softmax` : i===0 ? `${sizes[i]} neurons <span class="active-badge" id="badge-${i}">—</span>` : `${sizes[i]} · ${actName(architecture.activation)} <span class="active-badge" id="badge-${i}">—</span>`;
+    const body=out ? buildOutputBody() : `<div class="neurons-track" id="row-${i}"></div><div class="layer-hint">${layerHint(i,sizes[i],sizes.length)}</div>`;
+    const card=document.createElement('div'); card.className='layer-card'; card.id=`card-${i}`; card.style.setProperty('--ca',layerColors()[i]+'55');
+    card.innerHTML=`<div class="layer-header" onclick="toggleCard(${i})"><span class="layer-pill" style="${pillStyle(i)}">${titles[i].pill}</span><span class="layer-name">${titles[i].name}</span><span class="layer-meta">${meta}</span><span class="chev">▾</span></div><div class="layer-body" id="body-${i}">${body}</div>`;
+    box.appendChild(card);
+    if(!out){ const ar=document.createElement('div'); ar.className='arrow-conn'; ar.innerHTML=`<svg viewBox="0 0 16 16" fill="none"><path d="M8 2v12M4 10l4 4 4-4" stroke="white" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`; box.appendChild(ar); }
+  }
+  for(let i=0;i<sizes.length-1;i++) buildNeuronRow(`row-${i}`,sizes[i],visCount(sizes[i],i,sizes.length));
+  buildOutTable();
+}
+
+function buildOutTable(order){
+  const tb=$('outTable'); if(!tb) return; tb.innerHTML='';
+  const orderList=order||LABELS.map((_,i)=>i);
+  orderList.forEach(i=>{
+    const tr=document.createElement('tr'); tr.className='out-row'; tr.id=`orow-${i}`;
+    tr.onclick=()=>{ if(selectedRow===i){ $('orow-'+i)?.classList.remove('selected'); selectedRow=-1; } else { if(selectedRow>=0) $('orow-'+selectedRow)?.classList.remove('selected'); $('orow-'+i)?.classList.add('selected'); selectedRow=i; } };
+    tr.innerHTML=`<td class="out-rank" id="rk-${i}">—</td><td class="out-name">${LABELS[i]}</td><td><div class="out-bar-bg"><div class="out-bar-fill" id="bar-${i}"></div></div></td><td class="out-pct" id="pct-${i}">—</td><td class="out-logit" id="logit-${i}" style="display:none">—</td>`;
+    tb.appendChild(tr);
+  });
+}
+
+function renderOutputRows(probs,logits){
+  const sorted=[...probs].map((v,i)=>({v,i})).sort((a,b)=>b.v-a.v), winner=sorted[0].i;
+  probs.forEach((v,i)=>{
+    const pct=Math.round(v*100), rank=sorted.findIndex(s=>s.i===i)+1;
+    $('bar-'+i).style.width=pct+'%'; $('pct-'+i).textContent=pct+'%'; $('rk-'+i).textContent='#'+rank; $('logit-'+i).textContent=logits[i].toFixed(2);
+    const row=$('orow-'+i); row.className='out-row'; if(i===winner) row.classList.add('winner'); else if(rank===2) row.classList.add('r2'); else if(rank===3) row.classList.add('r3'); else row.classList.add('low'); if(selectedRow===i) row.classList.add('selected');
+  });
+}
+
+function buildLegend(){ const wrap=$('nnLegend'); wrap.innerHTML=''; layerSizes().forEach((size,i)=>{ const label=i===0?'Input':i===layerSizes().length-1?'Output':`Hidden ${i}`; const d=document.createElement('div'); d.className='nn-legend-item'; d.innerHTML=`<div class="nn-legend-dot" style="background:${layerColors()[i]}"></div>${label}`; wrap.appendChild(d); }); }
+function buildLabels(){ const wrap=$('nnLabels'); wrap.innerHTML=''; layerSizes().forEach((size,i)=>{ const title=i===0?'Input':i===layerSizes().length-1?'Output':`Hidden ${i}`; const d=document.createElement('div'); d.className='nn-layer-label'; d.innerHTML=`${title}<span>${size}</span>`; wrap.appendChild(d); }); }
+function updateStats(){ $('statInputs').textContent='784'; $('statHiddenCount').textContent=architecture.hiddenSizes.length; $('statActivation').textContent=actName(architecture.activation); $('statHiddenSizes').textContent=architecture.hiddenSizes.join('-'); }
+function rebuildUI(){ updateStats(); buildProgressBar(); buildLayerCards(); buildLegend(); buildLabels(); computeCanvasLayout(); drawCanvas(); }
+
+function computeCanvasLayout(){
+  nnW=nnCanvas.offsetWidth; nnCanvas.width=nnW; nnCanvas.height=nnH;
+  const sizes=layerSizes(); nnVisibleCounts=sizes.map((s,i)=>visCount(s,i,sizes.length)); nnNodes=[];
+  const padX=40,padY=30,usableW=nnW-padX*2,usableH=nnH-padY*2, xs=sizes.map((_,i)=>padX + i/(sizes.length-1)*usableW);
+  nnVisibleCounts.forEach((count,li)=>{ const arr=[]; for(let ni=0;ni<count;ni++){ const t=count===1?.5:ni/(count-1); arr.push({x:xs[li],y:padY+t*usableH,active:false,value:0,visual:null}); } nnNodes.push(arr); });
+  nnConnAlpha=new Array(sizes.length).fill(0);
+}
+
+function setCanvasLayer(idx){
+  nnActiveLayer=idx; const fw=computeForwardPass(), sizes=layerSizes();
+  nnNodes.forEach((layer,li)=>{
+    if(li>idx){ layer.forEach(n=>{n.active=false;n.value=0;n.visual=null}); return; }
+    const acts=fw.layers[li]||[], stride=Math.max(1,Math.floor(sizes[li]/(nnVisibleCounts[li]||1)));
+    layer.forEach((n,ni)=>{ const real=Math.min(ni*stride,acts.length-1); const v=acts[real]||0; n.value=v; n.visual=visualForValue(li,v); n.active=!!n.visual.lit; });
+  });
+}
+
+function drawCanvas(){
+  if(!nnW) return; nnCtx.clearRect(0,0,nnW,nnH); const cols=layerColors(), sizes=layerSizes();
+  for(let li=1;li<sizes.length;li++){
+    const alpha=nnConnAlpha[li]||0, a=nnNodes[li-1], b=nnNodes[li], c=hexToRgb(cols[li]), mod=Math.max(2,Math.floor((a.length+b.length)/8));
+    a.forEach((p,pi)=>b.forEach((q,qi)=>{ if((pi+qi)%mod!==0) return; const lineAlpha=alpha*.16 + (p.active&&q.active?.16:0); nnCtx.beginPath(); nnCtx.moveTo(p.x,p.y); nnCtx.lineTo(q.x,q.y); nnCtx.strokeStyle=`rgba(${c.r},${c.g},${c.b},${lineAlpha})`; nnCtx.lineWidth=.55; nnCtx.stroke(); if(alpha>.5 && p.active && q.active){ const t=(nnPulse*.03 + (pi+qi)*.013)%1; const x=p.x+(q.x-p.x)*t, y=p.y+(q.y-p.y)*t; nnCtx.beginPath(); nnCtx.arc(x,y,2,0,Math.PI*2); nnCtx.fillStyle=`rgba(${c.r},${c.g},${c.b},${Math.min(.92,alpha*.8)})`; nnCtx.fill(); }}));
+  }
+  nnNodes.forEach((layer,li)=>layer.forEach((n,ni)=>{
+    const vis=n.visual||{bg:'rgba(255,255,255,.05)',border:'rgba(255,255,255,.08)',lit:false};
+    const colHex=vis.label==='dead'?DEAD_COLOR:vis.label==='negative'?(architecture.activation==='tanh'?TANH_NEG:NEG_COLOR):layerColors()[li];
+    const rgb=hexToRgb(colHex), r=n.active?6:4;
+    if(n.active){ nnCtx.beginPath(); nnCtx.arc(n.x,n.y,r+4,0,Math.PI*2); nnCtx.fillStyle=`rgba(${rgb.r},${rgb.g},${rgb.b},.12)`; nnCtx.fill(); }
+    nnCtx.beginPath(); nnCtx.arc(n.x,n.y,r,0,Math.PI*2); nnCtx.fillStyle=vis.bg; nnCtx.fill(); nnCtx.strokeStyle=vis.border; nnCtx.lineWidth=n.active?1.2:.5; nnCtx.stroke();
+    if(hoveredNode && hoveredNode.layer===li && hoveredNode.idx===ni){ nnCtx.beginPath(); nnCtx.arc(n.x,n.y,r+3,0,Math.PI*2); nnCtx.strokeStyle='rgba(255,255,255,.9)'; nnCtx.lineWidth=1.2; nnCtx.stroke(); }
+    if(ni===nnVisibleCounts[li]-1 && sizes[li]>nnVisibleCounts[li]){ nnCtx.fillStyle='rgba(122,120,144,.6)'; nnCtx.font='10px DM Mono, monospace'; nnCtx.textAlign='center'; nnCtx.fillText('…',n.x,n.y+20); }
+  }));
+  if(lastProbs){ const li=nnNodes.length-1, winner=lastProbs.indexOf(Math.max(...lastProbs)); if(winner<nnNodes[li].length){ const n=nnNodes[li][winner]; nnCtx.fillStyle=OUTPUT_COLOR; nnCtx.font='bold 9px DM Mono, monospace'; nnCtx.textAlign='left'; nnCtx.fillText(LABELS[winner],n.x+10,n.y+3); } }
+}
+
+function animateCanvas(){ nnPulse++; for(let i=1;i<nnConnAlpha.length;i++){ const target=i<=nnActiveLayer?1:0; nnConnAlpha[i]+= (target-nnConnAlpha[i])*.08; } drawCanvas(); requestAnimationFrame(animateCanvas); }
+
+function toggleCard(i){ $('card-'+i)?.classList.toggle('collapsed'); }
+function toggleRaw(){ rawVisible=!rawVisible; document.querySelectorAll('[id^=logit-]').forEach(el=>el.style.display=rawVisible?'':'none'); const b=$('rawToggle'); if(b){ b.classList.toggle('on',rawVisible); b.textContent=rawVisible?'hide raw logits':'show raw logits'; } }
+function toggleSort(){ if(!lastProbs) return; sortedView=!sortedView; const b=$('sortToggle'); if(b){ b.classList.toggle('on',sortedView); b.textContent=sortedView?'original order':'sort by confidence'; } const order=sortedView?[...lastProbs].map((v,i)=>({v,i})).sort((a,b)=>b.v-a.v).map(x=>x.i):null; buildOutTable(order); renderOutputRows(lastProbs,lastLogits); document.querySelectorAll('[id^=logit-]').forEach(el=>el.style.display=rawVisible?'':'none'); }
+
+function activateLayer(idx){
+  const fw=computeForwardPass(), sizes=layerSizes();
+  for(let i=0;i<sizes.length;i++){ $('card-'+i)?.classList.toggle('active-card',i<=idx); const pb=$('pb'+i); if(pb){ pb.classList.toggle('done',i<idx); pb.classList.toggle('current',i===idx); } }
+  setCanvasLayer(idx);
+  if(idx<sizes.length-1){
+    const acts=fw.layers[idx], shown=visCount(sizes[idx],idx,sizes.length);
+    for(let i=0;i<shown;i++){
+      const el=$(`dot-row-${idx}-${i}`); if(!el) continue;
+      const v=acts[i]||0, vis=visualForValue(idx,v);
+      el.style.background=vis.bg; el.style.borderColor=vis.border; el.classList.toggle('lit',vis.lit);
+      el.querySelector('.n-tip').textContent=`neuron ${i+1}/${sizes[idx]} · ${vis.label} · ${v.toFixed(3)}`;
+    }
+    const badge=$('badge-'+idx); if(badge) badge.textContent=badgeForLayer(idx,acts);
+  } else {
+    lastProbs=fw.probs; lastLogits=fw.logits; renderOutputRows(fw.probs,fw.logits);
+    const winner=fw.probs.indexOf(Math.max(...fw.probs)), pct=Math.round(fw.probs[winner]*100);
+    $('gaugeFill').style.width=pct+'%'; $('gaugeVal').textContent=pct+'%'; $('winnerName').textContent=LABELS[winner]; $('winnerBadge').style.display='inline-flex';
+    if(rawVisible) document.querySelectorAll('[id^=logit-]').forEach(el=>el.style.display='');
+  }
+}
+
+function resetNeurons(){
+  document.querySelectorAll('.n').forEach(n=>{ n.style.background=''; n.style.borderColor=''; n.classList.remove('lit'); });
+  layerSizes().forEach((_,i)=>{ $('card-'+i)?.classList.remove('active-card'); const badge=$('badge-'+i); if(badge) badge.textContent='—'; const pb=$('pb'+i); if(pb) pb.classList.remove('done','current'); });
+  document.querySelectorAll('.out-row').forEach(r=>r.className='out-row'); document.querySelectorAll('.out-bar-fill').forEach(b=>b.style.width='0%'); document.querySelectorAll('.out-pct').forEach(p=>p.textContent='—'); document.querySelectorAll('[id^=rk-]').forEach(x=>x.textContent='—'); document.querySelectorAll('[id^=logit-]').forEach(x=>{x.textContent='—'; x.style.display='none';});
+  $('gaugeFill').style.width='0%'; $('gaugeVal').textContent='—'; $('winnerBadge').style.display='none';
+}
+
+function resetAll(){
+  if(simTimer) clearTimeout(simTimer); running=false; step=-1; lastProbs=null; lastLogits=null; selectedRow=-1;
+  $('runBtn').classList.remove('running'); $('runBtn').textContent='▶ Run';
+  rawVisible=false; sortedView=false;
+  const rb=$('rawToggle'), sb=$('sortToggle'); if(rb){ rb.classList.remove('on'); rb.textContent='show raw logits'; } if(sb){ sb.classList.remove('on'); sb.textContent='sort by confidence'; }
+  resetNeurons(); nnActiveLayer=-1; nnConnAlpha=new Array(layerSizes().length).fill(0); nnNodes.forEach(layer=>layer.forEach(n=>{n.active=false;n.value=0;n.visual=null;})); drawCanvas();
+}
+
+function runSim(){
+  if(running) return; resetNeurons(); running=true; step=0; $('runBtn').classList.add('running'); $('runBtn').textContent='Running…';
+  document.querySelectorAll('.layer-card').forEach(c=>c.classList.remove('collapsed'));
+  function tick(){ activateLayer(step); step++; if(step<=layerSizes().length-1) simTimer=setTimeout(tick,getSpeed()); else { running=false; $('runBtn').classList.remove('running'); $('runBtn').textContent='▶ Run'; } }
+  tick();
+}
+
+function applyArchitecture(){
+  const count=clamp(parseInt($('hiddenCount').value)||1,1,5);
+  const inputs=[...document.querySelectorAll('#hiddenSizesWrap input')];
+  architecture.hiddenSizes=inputs.slice(0,count).map((el,i)=>clamp(parseInt(el.value)||[256,128,64,32,16][i],4,512));
+  architecture.activation=$('activationSel').value;
+  forwardCache=null; rebuildUI(); resetAll();
+}
+
+$('speedSlider').oninput=()=>$('speedVal').textContent=$('speedSlider').value+'×';
+$('itemSel').onchange=()=>{ item=$('itemSel').value; forwardCache=null; drawImg(); resetAll(); };
+$('hiddenCount').addEventListener('input',syncHiddenInputs);
+$('px').addEventListener('mousemove',e=>{ if(!pixData) return; const r=$('px').getBoundingClientRect(), x=Math.floor((e.clientX-r.left)/r.width*28), y=Math.floor((e.clientY-r.top)/r.height*28); if(x>=0&&x<28&&y>=0&&y<28){ const v=pixData[y*28+x]; $('pixInf').textContent=`[${x},${y}] val=${v} norm=${(v/255).toFixed(3)}`; $('pixInf').style.color=v>10?'#a78bfa':'var(--muted)'; } });
+$('px').addEventListener('mouseleave',()=>{ $('pixInf').textContent='hover pixel to inspect'; $('pixInf').style.color='var(--muted)'; });
+
+nnCanvas.addEventListener('mousemove',e=>{
+  const r=nnCanvas.getBoundingClientRect(), mx=(e.clientX-r.left)*(nnCanvas.width/r.width), my=(e.clientY-r.top)*(nnCanvas.height/r.height);
+  let found=null; nnNodes.forEach((layer,li)=>layer.forEach((n,ni)=>{ if(Math.hypot(mx-n.x,my-n.y)<10) found={layer:li,idx:ni,node:n}; })); hoveredNode=found;
+  if(found){ const label=found.layer===0?'Input':found.layer===layerSizes().length-1?'Output':`Hidden ${found.layer}`; $('nnHoverInfo').textContent=`${label} · node ${found.idx+1}/${nnVisibleCounts[found.layer]} · value ${found.node.value.toFixed(3)} · ${found.node.visual?.label||'idle'}`; $('nnHoverInfo').style.color=layerColors()[found.layer]; }
+  else { $('nnHoverInfo').textContent='click any neuron node to inspect'; $('nnHoverInfo').style.color='var(--muted)'; }
+});
+
+nnCanvas.addEventListener('mouseleave',()=>{ hoveredNode=null; $('nnHoverInfo').textContent='click any neuron node to inspect'; $('nnHoverInfo').style.color='var(--muted)'; });
+window.addEventListener('resize',()=>{ computeCanvasLayout(); drawCanvas(); });
+
+syncHiddenInputs();
+drawImg();
+rebuildUI();
+resetAll();
+animateCanvas();
+</script>
+</body>
+</html>

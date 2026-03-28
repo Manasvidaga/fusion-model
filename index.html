@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fashion MNIST - Neural Network Models</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-dark: #0a0a0f;
+            --bg-surface: #111118;
+            --bg-card: #15151f;
+            --border: rgba(255, 255, 255, 0.08);
+            --text-primary: #ffffff;
+            --text-secondary: #8b8b9b;
+            --fnn: #f97316;
+            --cnn: #06b6d4;
+            --fusion: #a855f7;
+            --gradient-fnn: linear-gradient(135deg, #f97316, #fdba74);
+            --gradient-cnn: linear-gradient(135deg, #06b6d4, #67e8f9);
+            --gradient-fusion: linear-gradient(135deg, #a855f7, #c084fc);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        /* Navigation Bar */
+        .navbar {
+            background: var(--bg-surface);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        .nav-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 70px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--fnn), var(--fusion));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .logo-text {
+            font-size: 20px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--fnn), var(--cnn), var(--fusion));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 8px;
+            background: var(--bg-card);
+            padding: 4px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+        .nav-link {
+            padding: 8px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            color: var(--text-secondary);
+            font-weight: 500;
+            transition: all 0.3s ease;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .nav-link:hover {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .nav-link.active {
+            color: white;
+            background: linear-gradient(135deg, rgba(249, 115, 22, 0.2), rgba(168, 85, 247, 0.2));
+            border: 1px solid rgba(168, 85, 247, 0.3);
+        }
+
+        .nav-link.fnn.active { background: rgba(249, 115, 22, 0.2); border-color: rgba(249, 115, 22, 0.4); }
+        .nav-link.cnn.active { background: rgba(6, 182, 212, 0.2); border-color: rgba(6, 182, 212, 0.4); }
+        .nav-link.fusion.active { background: rgba(168, 85, 247, 0.2); border-color: rgba(168, 85, 247, 0.4); }
+
+        /* Main Content */
+        .main-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 32px 24px;
+            min-height: calc(100vh - 70px);
+        }
+
+        /* Page Container */
+        .page {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Hero Section */
+        .hero {
+            text-align: center;
+            padding: 60px 20px;
+            background: linear-gradient(135deg, rgba(249, 115, 22, 0.05), rgba(6, 182, 212, 0.05), rgba(168, 85, 247, 0.05));
+            border-radius: 24px;
+            margin-bottom: 48px;
+            border: 1px solid var(--border);
+        }
+
+        .hero h1 {
+            font-size: 48px;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, var(--fnn), var(--cnn), var(--fusion));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .hero p {
+            font-size: 18px;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Model Cards */
+        .models-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+            margin-top: 48px;
+        }
+
+        .model-card {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 32px;
+            border: 1px solid var(--border);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+        }
+
+        .model-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .model-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+            margin-bottom: 20px;
+        }
+
+        .model-card.fnn .model-icon { background: rgba(249, 115, 22, 0.2); border: 1px solid rgba(249, 115, 22, 0.4); }
+        .model-card.cnn .model-icon { background: rgba(6, 182, 212, 0.2); border: 1px solid rgba(6, 182, 212, 0.4); }
+        .model-card.fusion .model-icon { background: rgba(168, 85, 247, 0.2); border: 1px solid rgba(168, 85, 247, 0.4); }
+
+        .model-card h3 {
+            font-size: 24px;
+            margin-bottom: 12px;
+        }
+
+        .model-card.fnn h3 { color: var(--fnn); }
+        .model-card.cnn h3 { color: var(--cnn); }
+        .model-card.fusion h3 { color: var(--fusion); }
+
+        .model-card p {
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .model-stats {
+            display: flex;
+            gap: 16px;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+        }
+
+        .stat {
+            flex: 1;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 20px;
+            font-weight: bold;
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* Model Info Section */
+        .model-info {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 24px;
+            margin-top: 32px;
+            border: 1px solid var(--border);
+        }
+
+        .model-info h3 {
+            margin-bottom: 16px;
+            font-size: 20px;
+        }
+
+        .architecture {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .layer {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 14px;
+        }
+
+        /* Embed Container for Model Code */
+        .model-container {
+            background: var(--bg-dark);
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        .model-iframe {
+            width: 100%;
+            height: 800px;
+            border: none;
+            background: var(--bg-dark);
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 32px;
+            border-top: 1px solid var(--border);
+            margin-top: 48px;
+            color: var(--text-secondary);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .nav-content {
+                flex-direction: column;
+                height: auto;
+                padding: 16px 0;
+                gap: 16px;
+            }
+            
+            .hero h1 {
+                font-size: 32px;
+            }
+            
+            .models-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .nav-links {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .nav-link {
+                flex: 1;
+                text-align: center;
+                padding: 8px 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-content">
+                <div class="logo">
+                    <div class="logo-icon">🧠</div>
+                    <div class="logo-text">Fashion MNIST Explorer</div>
+                </div>
+                <div class="nav-links">
+                    <a class="nav-link fnn" data-page="fnn" href="fnn.html">FNN Model</a>
+                    <a class="nav-link cnn" data-page="cnn" href="cnn.html">CNN Model</a>
+                    <a class="nav-link fusion" data-page="fusion" href="fnn_cnn.html">Fusion Model</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="main-content">
+        <!-- Home Page -->
+        <div id="home-page" class="page active">
+            <div class="hero">
+                <h1>Fashion MNIST Classification</h1>
+                <p>Explore three powerful neural network architectures for fashion item classification</p>
+            </div>
+
+            <div class="models-grid">
+                <div class="model-card fnn" data-page="fnn">
+                    <div class="model-icon">📊</div>
+                    <h3>FNN Model</h3>
+                    <p>Feedforward Neural Network with dense layers. Simple yet effective baseline for fashion classification using fully connected architecture.</p>
+                    <div class="model-stats">
+                        <div class="stat">
+                            <span class="stat-value">784</span>
+                            <span class="stat-label">Input Nodes</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-value">3</span>
+                            <span class="stat-label">Hidden Layers</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-value">10</span>
+                            <span class="stat-label">Output Classes</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="model-card cnn" data-page="cnn">
+                    <div class="model-icon">🖼️</div>
+                    <h3>CNN Model</h3>
+                    <p>Convolutional Neural Network with feature extraction. Captures spatial patterns, edges, and textures in fashion items.</p>
+                    <div class="model-stats">
+                        <div class="stat">
+                            <span class="stat-value">28×28</span>
+                            <span class="stat-label">Input Size</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-value">2</span>
+                            <span class="stat-label">Conv Layers</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-value">~91%</span>
+                            <span class="stat-label">Accuracy</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="model-card fusion" data-page="fusion">
+                    <div class="model-icon">🔀</div>
+                    <h3>Fusion Model</h3>
+                    <p>Ensemble architecture combining FNN and CNN streams for superior accuracy through feature concatenation.</p>
+                    <div class="model-stats">
+                        <div class="stat">
+                            <span class="stat-value">Dual</span>
+                            <span class="stat-label">Streams</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-value">Concatenation</span>
+                            <span class="stat-label">Fusion Method</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-value">~94%</span>
+                            <span class="stat-label">Accuracy</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="model-info">
+                <h3>📚 Dataset Information</h3>
+                <p>Fashion-MNIST is a dataset of Zalando's article images—consisting of a training set of 60,000 examples and a test set of 10,000 examples. Each example is a 28×28 grayscale image, associated with a label from 10 classes.</p>
+                <div class="architecture">
+                    <span class="layer">T-shirt/top</span>
+                    <span class="layer">Trouser</span>
+                    <span class="layer">Pullover</span>
+                    <span class="layer">Dress</span>
+                    <span class="layer">Coat</span>
+                    <span class="layer">Sandal</span>
+                    <span class="layer">Shirt</span>
+                    <span class="layer">Sneaker</span>
+                    <span class="layer">Bag</span>
+                    <span class="layer">Ankle boot</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- FNN Model Page -->
+        <div id="fnn-page" class="page">
+            <div class="model-container" id="fnn-container">
+                <iframe id="fnn-iframe" class="model-iframe" srcdoc="<html><body style='background:#0a0a0f;color:white;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;font-family:monospace'><h2>Loading FNN Model...</h2></body></html>"></iframe>
+            </div>
+        </div>
+
+        <!-- CNN Model Page -->
+        <div id="cnn-page" class="page">
+            <div class="model-container" id="cnn-container">
+                <iframe id="cnn-iframe" class="model-iframe" srcdoc="<html><body style='background:#0a0a0f;color:white;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;font-family:monospace'><h2>Loading CNN Model...</h2></body></html>"></iframe>
+            </div>
+        </div>
+
+        <!-- Fusion Model Page -->
+        <div id="fusion-page" class="page">
+            <div class="model-container" id="fusion-container">
+                <iframe id="fusion-iframe" class="model-iframe" srcdoc="<html><body style='background:#0a0a0f;color:white;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;font-family:monospace'><h2>Loading Fusion Model...</h2></body></html>"></iframe>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Fashion MNIST Classification | Built with ❤️ | Interactive Neural Network Explorer</p>
+        </div>
+    </div>
+
+    <script>
+        // Navigation handler
+        let currentPage = 'home';
+
+        function switchPage(pageId) {
+            // Hide all pages
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+            
+            // Show selected page
+            const selectedPage = document.getElementById(`${pageId}-page`);
+            if (selectedPage) {
+                selectedPage.classList.add('active');
+                currentPage = pageId;
+            }
+            
+            // Update active nav link
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('data-page') === pageId) {
+                    link.classList.add('active');
+                }
+            });
+            
+            // Load model iframe content when page is first accessed
+            if (pageId !== 'home' && !window[`${pageId}Loaded`]) {
+                loadModel(pageId);
+            }
+        }
+
+        function loadModel(modelType) {
+            const iframeId = `${modelType}-iframe`;
+            const iframe = document.getElementById(iframeId);
+            
+            if (!iframe) return;
+            
+            // Mark as loaded
+            window[`${modelType}Loaded`] = true;
+            
+            // Here you can inject your existing code
+            // For now, we'll load a placeholder
+            // Replace the content with your actual model code
+            
+            let modelHTML = '';
+            
+            if (modelType === 'fnn') {
+                modelHTML = getFNNModelHTML();
+            } else if (modelType === 'cnn') {
+                modelHTML = getCNNModelHTML();
+            } else if (modelType === 'fusion') {
+                modelHTML = getFusionModelHTML();
+            }
+            
+            iframe.srcdoc = modelHTML;
+        }
+
+        // FNN Model HTML - Replace this with your FNN code
+        function getFNNModelHTML() {
+            return `<!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>FNN Model - Fashion MNIST</title>
+                <style>
+                    * { margin: 0; padding: 0; box-sizing: border-box; }
+                    body {
+                        font-family: monospace;
+                        background: linear-gradient(135deg, #0a0a0f 0%, #111118 100%);
+                        color: #fff;
+                        padding: 20px;
+                        min-height: 100vh;
+                    }
+                    .container {
+                        max-width: 1200px;
+                        margin: 0 auto;
+                    }
+                    .header {
+                        text-align: center;
+                        margin-bottom: 30px;
+                    }
+                    .header h1 {
+                        color: #f97316;
+                        margin-bottom: 10px;
+                    }
+                    .model-badge {
+                        display: inline-block;
+                        background: rgba(249,115,22,0.2);
+                        padding: 5px 15px;
+                        border-radius: 20px;
+                        border: 1px solid rgba(249,115,22,0.4);
+                        font-size: 14px;
+                    }
+                    .content-placeholder {
+                        background: rgba(255,255,255,0.05);
+                        border-radius: 12px;
+                        padding: 40px;
+                        text-align: center;
+                        margin: 20px 0;
+                    }
+                    .info-card {
+                        background: rgba(255,255,255,0.05);
+                        border-radius: 12px;
+                        padding: 20px;
+                        margin: 20px 0;
+                        border: 1px solid rgba(249,115,22,0.2);
+                    }
+                    .architecture {
+                        display: flex;
+                        flex-wrap: wrap;
+                        gap: 10px;
+                        justify-content: center;
+                        margin-top: 20px;
+                    }
+                    .layer {
+                        background: rgba(249,115,22,0.2);
+                        padding: 10px 20px;
+                        border-radius: 8px;
+                        border: 1px solid rgba(249,115,22,0.4);
+                        font-size: 14px;
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="header">
+                        <h1>🔷 Feedforward Neural Network</h1>
+                        <div class="model-badge">FNN Architecture</div>
+                    </div>
+                    <div class="content-placeholder">
+                        <h2>📊 FNN Model Interface</h2>
+                        <p style="margin-top: 10px; color: #8b8b9b;">Insert your FNN model code here</p>
+                    </div>
+                    <div class="info-card">
+                        <h3>🏗️ Architecture</h3>
+                        <div class="architecture">
+                            <div class="layer">Input: 784</div>
+                            <div class="layer">→</div>
+                            <div class="layer">Dense: 512 (ReLU)</div>
+                            <div class="layer">→</div>
+                            <div class="layer">Dense: 256 (ReLU)</div>
+                            <div class="layer">→</div>
+                            <div class="layer">Dense: 128 (ReLU)</div>
+                            <div class="layer">→</div>
+                            <div class="layer">Output: 10 (Softmax)</div>
+                        </div>
+                    </div>
+                    <div class="info-card">
+                        <h3>📈 Performance</h3>
+                        <p>Expected Accuracy: ~88% on test set</p>
+                        <p>Parameters: ~500K</p>
+                    </div>
+                </div>
+            </body>
+            </html>`;
+        }
+
+        // CNN Model HTML - Replace this with your CNN code
+        function getCNNModelHTML() {
+            return `<!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <title>CNN Model - Fashion MNIST</title>
+                <style>
+                    * { margin: 0; padding: 0; box-sizing: border-box; }
+                    body {
+                        font-family: monospace;
+                        background: linear-gradient(135deg, #0a0a0f 0%, #111118 100%);
+                        color: #fff;
+                        padding: 20px;
+                    }
+                    .container { max-width: 1200px; margin: 0 auto; }
+                    .header { text-align: center; margin-bottom: 30px; }
+                    .header h1 { color: #06b6d4; margin-bottom: 10px; }
+                    .model-badge {
+                        display: inline-block;
+                        background: rgba(6,182,212,0.2);
+                        padding: 5px 15px;
+                        border-radius: 20px;
+                        border: 1px solid rgba(6,182,212,0.4);
+                    }
+                    .content-placeholder {
+                        background: rgba(255,255,255,0.05);
+                        border-radius: 12px;
+                        padding: 40px;
+                        text-align: center;
+                        margin: 20px 0;
+                    }
+                    .info-card {
+                        background: rgba(255,255,255,0.05);
+                        border-radius: 12px;
+                        padding: 20px;
+                        margin: 20px 0;
+                        border: 1px solid rgba(6,182,212,0.2);
+                    }
+                    .architecture { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 20px; }
+                    .layer {
+                        background: rgba(6,182,212,0.2);
+                        padding: 10px 20px;
+                        border-radius: 8px;
+                        border: 1px solid rgba(6,182,212,0.4);
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="header">
+                        <h1>🖼️ Convolutional Neural Network</h1>
+                        <div class="model-badge">CNN Architecture</div>
+                    </div>
+                    <div class="content-placeholder">
+                        <h2>🎯 CNN Model Interface</h2>
+                        <p style="margin-top: 10px; color: #8b8b9b;">Insert your CNN model code here</p>
+                    </div>
+                    <div class="info-card">
+                        <h3>🏗️ Architecture</h3>
+                        <div class="architecture">
+                            <div class="layer">Input: 28×28×1</div>
+                            <div class="layer">Conv2D(32,3×3)</div>
+                            <div class="layer">MaxPool(2×2)</div>
+                            <div class="layer">Conv2D(64,3×3)</div>
+                            <div class="layer">MaxPool(2×2)</div>
+                            <div class="layer">Flatten</div>
+                            <div class="layer">Dense(128)</div>
+                            <div class="layer">Output(10)</div>
+                        </div>
+                    </div>
+                    <div class="info-card">
+                        <h3>📈 Performance</h3>
+                        <p>Expected Accuracy: ~91% on test set</p>
+                        <p>Parameters: ~1.2M</p>
+                    </div>
+                </div>
+            </body>
+            </html>`;
+        }
+
+        // Fusion Model HTML - Replace this with your Fusion code
+        function getFusionModelHTML() {
+            return `<!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <title>Fusion Model - Fashion MNIST</title>
+                <style>
+                    * { margin: 0; padding: 0; box-sizing: border-box; }
+                    body {
+                        font-family: monospace;
+                        background: linear-gradient(135deg, #0a0a0f 0%, #111118 100%);
+                        color: #fff;
+                        padding: 20px;
+                    }
+                    .container { max-width: 1200px; margin: 0 auto; }
+                    .header { text-align: center; margin-bottom: 30px; }
+                    .header h1 { background: linear-gradient(135deg, #f97316, #a855f7); -webkit-background-clip: text; background-clip: text; color: transparent; margin-bottom: 10px; }
+                    .model-badge {
+                        display: inline-block;
+                        background: rgba(168,85,247,0.2);
+                        padding: 5px 15px;
+                        border-radius: 20px;
+                        border: 1px solid rgba(168,85,247,0.4);
+                    }
+                    .content-placeholder {
+                        background: rgba(255,255,255,0.05);
+                        border-radius: 12px;
+                        padding: 40px;
+                        text-align: center;
+                        margin: 20px 0;
+                    }
+                    .info-card {
+                        background: rgba(255,255,255,0.05);
+                        border-radius: 12px;
+                        padding: 20px;
+                        margin: 20px 0;
+                        border: 1px solid rgba(168,85,247,0.3);
+                    }
+                    .architecture { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 20px; }
+                    .layer {
+                        background: rgba(168,85,247,0.2);
+                        padding: 10px 20px;
+                        border-radius: 8px;
+                        border: 1px solid rgba(168,85,247,0.4);
+                    }
+                    .fusion-badge {
+                        background: linear-gradient(135deg, #f97316, #a855f7);
+                        padding: 5px 10px;
+                        border-radius: 5px;
+                        font-size: 12px;
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="header">
+                        <h1>🔀 Dual-Stream Fusion Model</h1>
+                        <div class="model-badge">FNN + CNN Ensemble</div>
+                    </div>
+                    <div class="content-placeholder">
+                        <h2>⚡ Fusion Model Interface</h2>
+                        <p style="margin-top: 10px; color: #8b8b9b;">Insert your Fusion model code here</p>
+                        <div style="margin-top: 20px;">
+                            <span class="fusion-badge">FNN Stream</span>
+                            <span style="margin: 0 10px">+</span>
+                            <span class="fusion-badge">CNN Stream</span>
+                            <span style="margin: 0 10px">→</span>
+                            <span class="fusion-badge">Concatenation Fusion</span>
+                        </div>
+                    </div>
+                    <div class="info-card">
+                        <h3>🏗️ Architecture</h3>
+                        <div class="architecture">
+                            <div class="layer">FNN Path: 784→512→256→128</div>
+                            <div class="layer">CNN Path: Conv→Pool→Conv→Pool→FC</div>
+                            <div class="layer">Fusion: Concatenation</div>
+                            <div class="layer">Output: Softmax(10)</div>
+                        </div>
+                    </div>
+                    <div class="info-card">
+                        <h3>📈 Performance</h3>
+                        <p>Expected Accuracy: ~94% on test set</p>
+                        <p>Ensemble Benefits: Combines global patterns (FNN) + local features (CNN)</p>
+                    </div>
+                </div>
+            </body>
+            </html>`;
+        }
+
+        // Event listeners for navigation
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                const page = link.getAttribute('data-page');
+                if (page) {
+                    switchPage(page);
+                }
+            });
+        });
+
+        document.querySelectorAll('.model-card').forEach(card => {
+            card.addEventListener('click', () => {
+                const page = card.getAttribute('data-page');
+                if (page) {
+                    switchPage(page);
+                }
+            });
+        });
+
+        // Set active state based on URL hash if present
+        if (window.location.hash) {
+            const page = window.location.hash.slice(1);
+            if (['fnn', 'cnn', 'fusion'].includes(page)) {
+                switchPage(page);
+            }
+        }
+    </script>
+</body>
+</html>
